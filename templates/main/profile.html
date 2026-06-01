@@ -1,0 +1,572 @@
+{% extends "base/base.html" %}
+
+{% block body %}
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --platinum: #e8e4dc;
+    --platinum2: #f4f1eb;
+    --champagne: #d4c9b0;
+    --champagne2: #c9bb9a;
+    --silk: #f9f7f4;
+    --ink: #1a1814;
+    --ink2: #2e2b26;
+    --muted: #8a8070;
+    --muted2: #b5ad9e;
+    --accent: #c8b99a;
+    --accent2: #e2d5c0;
+    --success: #4a7c59;
+    --danger: #a04040;
+    --glow: rgba(212,201,176,0.18);
+    --glow2: rgba(200,185,154,0.12);
+    --card-bg: rgba(255,253,250,0.92);
+    --border: rgba(212,201,176,0.35);
+    --border2: rgba(212,201,176,0.55);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .pr-root {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1.25rem;
+    background: #f5f2ec;
+    position: relative;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── Background orbs ── */
+  .pr-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .pr-bg-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: 0.55;
+    animation: orb-drift 14s ease-in-out infinite alternate;
+  }
+  .pr-bg-orb:nth-child(1) { width:500px;height:500px;top:-120px;left:-100px;background:radial-gradient(circle,#e2d4b8 0%,transparent 70%);animation-duration:16s; }
+  .pr-bg-orb:nth-child(2) { width:400px;height:400px;bottom:-80px;right:-80px;background:radial-gradient(circle,#d4c9b0 0%,transparent 70%);animation-duration:20s;animation-delay:-4s; }
+  .pr-bg-orb:nth-child(3) { width:300px;height:300px;top:40%;left:55%;background:radial-gradient(circle,#c9d4b4 0%,transparent 70%);animation-duration:12s;animation-delay:-8s;opacity:0.3; }
+  @keyframes orb-drift { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(40px,30px) scale(1.08);} }
+
+  /* ── Floating coins ── */
+  .pr-coins { position:absolute;inset:0;pointer-events:none;overflow:hidden; }
+  .pr-coin {
+    position:absolute; border-radius:50%;
+    background:linear-gradient(135deg,#e8d8b0 0%,#c9b07a 40%,#e8d8b0 60%,#b89a5a 100%);
+    border:1.5px solid rgba(180,150,80,0.4);
+    opacity:0; animation:coin-float linear infinite;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700; color:rgba(100,75,30,0.7);
+    font-family:'DM Sans',sans-serif; letter-spacing:-0.5px;
+    box-shadow:inset 0 2px 4px rgba(255,255,255,0.5),inset 0 -2px 3px rgba(0,0,0,0.1);
+  }
+  @keyframes coin-float {
+    0%   {opacity:0;transform:translateY(110vh) rotate(0deg) scale(0.7);}
+    10%  {opacity:0.85;}
+    80%  {opacity:0.65;}
+    100% {opacity:0;transform:translateY(-15vh) rotate(380deg) scale(1.1);}
+  }
+
+  /* ── Mobile brand bar ── */
+  .pr-brand { display:none; }
+
+  /* ── Main card ── */
+  .pr-card {
+    width:100%; max-width:480px;
+    background:var(--card-bg);
+    border:1px solid var(--border2);
+    border-radius:32px;
+    padding:2.8rem 2.6rem 2.4rem;
+    backdrop-filter:blur(24px) saturate(1.4);
+    -webkit-backdrop-filter:blur(24px) saturate(1.4);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.7) inset,
+      0 2px 0 rgba(255,255,255,0.9) inset,
+      0 32px 80px rgba(100,85,55,0.15),
+      0 8px 24px rgba(100,85,55,0.08);
+    position:relative;
+    animation:card-in 0.7s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes card-in {
+    from{opacity:0;transform:translateY(28px) scale(0.97);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  .pr-card::before {
+    content:'';position:absolute;
+    top:0;left:10%;right:10%;height:1.5px;
+    background:linear-gradient(90deg,transparent,var(--champagne),var(--accent2),var(--champagne),transparent);
+    border-radius:0 0 2px 2px;
+  }
+
+  /* ── Avatar + header ── */
+  .pr-header {
+    display:flex; align-items:center; gap:1.25rem;
+    margin-bottom:1.8rem;
+    animation:card-in 0.7s 0.05s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .pr-avatar {
+    width:60px;height:60px;border-radius:18px;flex-shrink:0;
+    background:linear-gradient(145deg,var(--platinum2) 0%,var(--champagne) 100%);
+    border:1px solid var(--border2);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.55rem;font-weight:600;color:var(--ink2);
+    box-shadow:0 4px 16px rgba(180,155,100,0.2),0 1px 3px rgba(0,0,0,0.06);
+    user-select:none;
+  }
+  .pr-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:2rem;font-weight:500;color:var(--ink);
+    line-height:1.1;letter-spacing:-0.5px;
+  }
+  .pr-subtitle {
+    font-size:0.78rem;color:var(--muted);margin-top:0.3rem;
+    font-weight:400;letter-spacing:0.01em;
+  }
+
+  /* ── Divider ── */
+  .pr-divider {
+    height:1px;
+    background:linear-gradient(90deg,transparent,var(--border2),transparent);
+    margin:0 0 1.6rem;
+  }
+
+  /* ── Fields ── */
+  .pr-fields { display:flex;flex-direction:column;gap:0.85rem;margin-bottom:1.5rem; }
+
+  .pr-field {
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    background:var(--silk);
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    padding:0.9rem 0.9rem 0.9rem 1.1rem;
+    transition:border-color .18s,box-shadow .18s;
+  }
+  .pr-field:hover { border-color:var(--champagne2); }
+
+  .pr-field-left { display:flex;flex-direction:column;gap:0.18rem;min-width:0; }
+  .pr-field-label {
+    font-size:0.62rem;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;
+  }
+  .pr-field-value {
+    font-size:0.92rem;color:var(--ink2);font-weight:500;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .pr-field-value.masked { letter-spacing:0.18em;font-size:0.72rem;padding-top:0.1rem; }
+
+  /* ── Edit icon button ── */
+  .pr-edit-btn {
+    flex-shrink:0;width:34px;height:34px;border-radius:10px;
+    background:var(--platinum2);border:1px solid var(--border2);
+    color:var(--muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s,border-color .15s,color .15s,transform .1s;
+  }
+  .pr-edit-btn:hover {
+    background:var(--champagne);border-color:var(--champagne2);
+    color:var(--ink2);transform:scale(1.05);
+  }
+  .pr-edit-btn:active { transform:scale(0.97); }
+  .pr-edit-btn svg { width:15px;height:15px;pointer-events:none; }
+
+  /* ── Bottom actions ── */
+  .pr-actions { display:flex;gap:0.75rem; }
+
+  .pr-back {
+    flex:1;display:inline-flex;align-items:center;justify-content:center;gap:0.48rem;
+    padding:0.85rem;border-radius:12px;
+    border:1.5px solid var(--border2);background:var(--silk);
+    color:var(--muted);font-size:0.86rem;font-weight:600;
+    text-decoration:none;font-family:'DM Sans',sans-serif;
+    transition:all .18s;
+  }
+  .pr-back:hover { color:var(--ink2);border-color:var(--champagne2);background:var(--platinum2); }
+  .pr-back svg { width:13px;height:13px;flex-shrink:0; }
+
+  .pr-delete-btn {
+    flex:1;padding:0.85rem;border-radius:12px;
+    border:1.5px solid rgba(160,64,64,0.2);background:rgba(160,64,64,0.04);
+    color:var(--danger);font-weight:600;font-size:0.86rem;cursor:pointer;
+    font-family:'DM Sans',sans-serif;transition:all .18s;
+  }
+  .pr-delete-btn:hover { background:rgba(160,64,64,0.1);border-color:rgba(160,64,64,0.35); }
+
+  /* ── Modal ── */
+  .pr-overlay {
+    position:fixed;inset:0;background:rgba(26,24,20,0.45);
+    backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+    z-index:300;opacity:0;pointer-events:none;transition:opacity .22s;
+    padding:1rem;
+  }
+  .pr-overlay.open { opacity:1;pointer-events:all; }
+  .pr-modal {
+    background:var(--card-bg);border:1px solid var(--border2);
+    border-radius:24px;padding:2.2rem 2.2rem 2rem;
+    width:100%;max-width:400px;
+    box-shadow:0 32px 80px rgba(100,85,55,0.2),0 8px 24px rgba(100,85,55,0.1);
+    transform:translateY(14px) scale(0.97);transition:transform .22s;
+  }
+  .pr-overlay.open .pr-modal { transform:translateY(0) scale(1); }
+  .pr-modal::before {
+    content:'';display:block;
+    height:1.5px;margin:-2.2rem -2.2rem 1.8rem;
+    background:linear-gradient(90deg,transparent,var(--champagne),var(--accent2),var(--champagne),transparent);
+    border-radius:24px 24px 0 0;
+  }
+  .pr-modal-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.5rem;font-weight:500;color:var(--ink);margin-bottom:1.2rem;
+  }
+  .pr-modal-label {
+    font-size:0.68rem;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;
+    display:block;margin-bottom:0.4rem;
+  }
+  .pr-modal-input {
+    width:100%;background:var(--silk);border:1.5px solid var(--border);
+    color:var(--ink2);border-radius:12px;padding:0.82rem 1rem;
+    font-size:0.92rem;font-family:'DM Sans',sans-serif;
+    outline:none;transition:border-color .18s,box-shadow .18s,background .18s;
+    -webkit-appearance:none;appearance:none;
+  }
+  .pr-modal-input::placeholder { color:var(--muted2);opacity:0.8; }
+  .pr-modal-input:focus { border-color:var(--champagne2);box-shadow:0 0 0 3.5px rgba(201,187,154,0.22);background:#fffef9; }
+  .pr-modal-input.invalid { border-color:rgba(160,64,64,0.5);box-shadow:0 0 0 3px rgba(160,64,64,0.1); }
+  .pr-modal-error { font-size:0.74rem;color:var(--danger);margin-top:5px;display:none;animation:shake .35s cubic-bezier(.36,.07,.19,.97); }
+  .pr-modal-error.visible { display:block; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-5px);} 40%{transform:translateX(5px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} }
+
+  .pr-pw-extra { margin-top:1rem; }
+  .pr-success { font-size:0.76rem;color:var(--success);margin-top:0.55rem;display:none;text-align:center;font-weight:600; }
+  .pr-success.visible { display:block; }
+
+  .pr-modal-actions { display:flex;gap:0.7rem;margin-top:1.4rem; }
+  .pr-modal-cancel {
+    flex:1;padding:0.8rem;border-radius:12px;
+    border:1.5px solid var(--border2);background:var(--silk);
+    color:var(--muted);font-weight:600;cursor:pointer;
+    font-family:'DM Sans',sans-serif;transition:all .15s;font-size:0.88rem;
+  }
+  .pr-modal-cancel:hover { border-color:var(--champagne2);color:var(--ink2); }
+  .pr-modal-save {
+    flex:2;padding:0.8rem;border-radius:12px;border:none;
+    background:linear-gradient(145deg,var(--ink2) 0%,var(--ink) 100%);
+    color:var(--platinum2);font-family:'DM Sans',sans-serif;font-weight:600;
+    cursor:pointer;transition:opacity .15s,transform .15s;letter-spacing:0.02em;
+    font-size:0.88rem;position:relative;overflow:hidden;
+    box-shadow:0 6px 20px rgba(26,24,20,0.2);
+  }
+  .pr-modal-save::before {
+    content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);
+    transform:skewX(-15deg);transition:left .6s;
+  }
+  .pr-modal-save:hover:not(:disabled)::before { left:150%; }
+  .pr-modal-save:hover:not(:disabled) { transform:translateY(-1px); }
+  .pr-modal-save:disabled { opacity:0.6;cursor:not-allowed;transform:none; }
+
+  /* Delete modal specific */
+  .pr-delete-body { font-size:0.86rem;color:var(--muted);line-height:1.65;margin-bottom:1.4rem; }
+  .pr-delete-confirm {
+    flex:2;padding:0.8rem;border-radius:12px;border:none;
+    background:var(--danger);color:#fff;
+    font-family:'DM Sans',sans-serif;font-weight:600;
+    cursor:pointer;transition:opacity .15s;font-size:0.88rem;
+  }
+  .pr-delete-confirm:disabled { opacity:0.6;cursor:not-allowed; }
+  .pr-delete-confirm:hover:not(:disabled) { filter:brightness(1.1); }
+
+  /* ── Mobile ── */
+  @media (max-width: 600px) {
+    .pr-root {
+      padding:0;align-items:stretch;
+      justify-content:flex-start;min-height:100dvh;flex-direction:column;
+    }
+    .pr-brand {
+      display:flex;align-items:center;gap:.6rem;
+      padding:1.1rem 1.5rem .9rem;
+      background:rgba(245,242,236,0.95);
+      border-bottom:1px solid rgba(212,201,176,0.3);
+      flex-shrink:0;
+      animation:fadeDown .5s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+    .pr-brand-icon {
+      width:34px;height:34px;border-radius:10px;
+      background:linear-gradient(145deg,#e8e4dc 0%,#c9bb9a 100%);
+      border:1px solid rgba(212,201,176,0.55);
+      display:grid;place-items:center;
+      box-shadow:0 2px 8px rgba(180,155,100,0.15);flex-shrink:0;
+    }
+    .pr-brand-icon svg { width:18px;height:18px; }
+    .pr-brand-name {
+      font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;
+      color:#2e2b26;letter-spacing:-.02em;
+    }
+    .pr-card {
+      max-width:100%;flex:1;border-radius:0;border:none;
+      padding:2.2rem 1.6rem 2.2rem;box-shadow:none;
+      display:flex;flex-direction:column;justify-content:center;
+      animation:card-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .pr-actions { flex-direction:column; }
+    .pr-title { font-size:1.75rem; }
+    .pr-avatar { width:52px;height:52px;border-radius:14px;font-size:1.3rem; }
+    .pr-modal { border-radius:20px; }
+  }
+
+  @media (max-width: 375px) {
+    .pr-card { padding:2rem 1.25rem 1.8rem; }
+    .pr-brand { padding:.9rem 1.2rem .75rem; }
+  }
+</style>
+
+<div class="pr-root">
+  <!-- Background -->
+  <div class="pr-bg">
+    <div class="pr-bg-orb"></div>
+    <div class="pr-bg-orb"></div>
+    <div class="pr-bg-orb"></div>
+  </div>
+  <div class="pr-coins" id="prCoins"></div>
+
+  <!-- Mobile brand bar -->
+  <div class="pr-brand">
+    <div class="pr-brand-icon">
+      <svg viewBox="0 0 26 26" fill="none">
+        <circle cx="13" cy="13" r="10.5" stroke="#c9bb9a" stroke-width="1.5"/>
+        <path d="M9.5 13h7M13 9.5v7" stroke="#c9bb9a" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="pr-brand-name">ExpensesManager</span>
+  </div>
+
+  <div class="pr-card">
+
+    <!-- Header -->
+    <div class="pr-header">
+      <div class="pr-avatar" id="avatarInitial">{{ fullname|first|upper }}</div>
+      <div>
+        <div class="pr-title" id="profileName">{{ fullname }}</div>
+        <div class="pr-subtitle">Профиль аккаунта</div>
+      </div>
+    </div>
+
+    <div class="pr-divider"></div>
+
+    <!-- Fields -->
+    <div class="pr-fields">
+
+      <div class="pr-field">
+        <div class="pr-field-left">
+          <span class="pr-field-label">Полное имя</span>
+          <span class="pr-field-value" id="displayName">{{ fullname }}</span>
+        </div>
+        <button class="pr-edit-btn" onclick="openModal('name')" title="Изменить имя" aria-label="Изменить имя">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.5 2.5a1.414 1.414 0 012 2L5 12H3v-2L10.5 2.5z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="pr-field">
+        <div class="pr-field-left">
+          <span class="pr-field-label">Электронная почта</span>
+          <span class="pr-field-value" id="displayEmail">{{ email }}</span>
+        </div>
+        <button class="pr-edit-btn" onclick="openModal('email')" title="Изменить почту" aria-label="Изменить почту">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.5 2.5a1.414 1.414 0 012 2L5 12H3v-2L10.5 2.5z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="pr-field">
+        <div class="pr-field-left">
+          <span class="pr-field-label">Пароль</span>
+          <span class="pr-field-value masked">••••••••</span>
+        </div>
+        <button class="pr-edit-btn" onclick="openModal('password')" title="Изменить пароль" aria-label="Изменить пароль">
+          <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.5 2.5a1.414 1.414 0 012 2L5 12H3v-2L10.5 2.5z"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Bottom actions -->
+    <div class="pr-actions">
+      <a href="/" class="pr-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Главная
+      </a>
+      <button class="pr-delete-btn" onclick="openDeleteModal()">Удалить аккаунт</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit modal -->
+<div class="pr-overlay" id="editOverlay">
+  <div class="pr-modal">
+    <div class="pr-modal-title" id="modalTitle">Редактировать</div>
+    <label class="pr-modal-label" id="editLabel">Значение</label>
+    <input class="pr-modal-input" id="editInput" autocomplete="off" />
+    <div class="pr-modal-error" id="editError"></div>
+    <div class="pr-pw-extra" id="currentPwWrap" style="display:none;">
+      <label class="pr-modal-label">Текущий пароль</label>
+      <input class="pr-modal-input" id="currentPwInput" type="password" placeholder="Введите текущий пароль" autocomplete="current-password" />
+    </div>
+    <div class="pr-success" id="editSuccess">Успешно сохранено!</div>
+    <div class="pr-modal-actions">
+      <button type="button" class="pr-modal-cancel" onclick="closeModal()">Отмена</button>
+      <button type="button" class="pr-modal-save" id="modalSaveBtn" onclick="submitEdit()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="pr-overlay" id="deleteOverlay">
+  <div class="pr-modal">
+    <div class="pr-modal-title">Удалить аккаунт</div>
+    <div class="pr-delete-body">Это навсегда удалит ваш аккаунт и все ваши данные. Отменить действие невозможно.</div>
+    <div class="pr-modal-actions">
+      <button type="button" class="pr-modal-cancel" onclick="closeDeleteModal()">Отмена</button>
+      <button type="button" class="pr-delete-confirm" id="deleteConfirmBtn" onclick="confirmDelete()">Да, удалить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Floating coins ── */
+  (function() {
+    const container = document.getElementById('prCoins');
+    const symbols = ['₩','$','€','₽','¥'];
+    function spawnCoin() {
+      const coin = document.createElement('div');
+      coin.className = 'pr-coin';
+      const size = 18 + Math.random() * 20;
+      coin.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*96}%;animation-duration:${7+Math.random()*10}s;animation-delay:${Math.random()*2}s;font-size:${size*0.42}px;`;
+      coin.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+      container.appendChild(coin);
+      coin.addEventListener('animationend', () => coin.remove());
+    }
+    setInterval(spawnCoin, 1100);
+    for(let i=0;i<6;i++) setTimeout(spawnCoin, i*400);
+  })();
+
+  /* ── Modal logic ── */
+  const CSRF = '{{ csrf_token }}';
+  let currentField = null;
+
+  const configs = {
+    name:     { title: 'Изменить имя',               label: 'Новое имя',    type: 'text',     placeholder: 'Имя' },
+    email:    { title: 'Изменить электронную почту',  label: 'Новая почта',  type: 'email',    placeholder: 'вы@gmail.com' },
+    password: { title: 'Изменить пароль',             label: 'Новый пароль', type: 'password', placeholder: 'Минимум 4 символа' },
+  };
+
+  function openModal(field) {
+    currentField = field;
+    const cfg = configs[field];
+    document.getElementById('modalTitle').textContent = cfg.title;
+    document.getElementById('editLabel').textContent  = cfg.label;
+    const input = document.getElementById('editInput');
+    input.type = cfg.type; input.placeholder = cfg.placeholder; input.value = '';
+    input.classList.remove('invalid');
+    document.getElementById('editError').textContent = '';
+    document.getElementById('editError').classList.remove('visible');
+    document.getElementById('editSuccess').classList.remove('visible');
+    document.getElementById('currentPwWrap').style.display = field === 'password' ? 'block' : 'none';
+    document.getElementById('currentPwInput').value = '';
+    document.getElementById('modalSaveBtn').disabled = false;
+    document.getElementById('editOverlay').classList.add('open');
+    setTimeout(() => input.focus(), 120);
+  }
+
+  function closeModal()       { document.getElementById('editOverlay').classList.remove('open'); }
+  function openDeleteModal()  { document.getElementById('deleteOverlay').classList.add('open'); }
+  function closeDeleteModal() { document.getElementById('deleteOverlay').classList.remove('open'); }
+
+  document.getElementById('editOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('editOverlay')) closeModal();
+  });
+  document.getElementById('deleteOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('deleteOverlay')) closeDeleteModal();
+  });
+
+  async function submitEdit() {
+    const btn = document.getElementById('modalSaveBtn');
+    const errorDiv = document.getElementById('editError');
+    const input = document.getElementById('editInput');
+    errorDiv.classList.remove('visible'); errorDiv.textContent = '';
+    input.classList.remove('invalid'); btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', CSRF);
+    formData.append('field', currentField);
+    formData.append('value', input.value.trim());
+    if (currentField === 'password')
+      formData.append('current_password', document.getElementById('currentPwInput').value);
+
+    try {
+      const res = await fetch('/profile/edit/', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData,
+      });
+      let data;
+      try { data = await res.json(); } catch {
+        errorDiv.textContent = `Сервер вернул не JSON (статус ${res.status}).`;
+        errorDiv.classList.add('visible'); btn.disabled = false; return;
+      }
+      if (data.success) {
+        const val = data.data || data.value || '';
+        if (currentField === 'name') {
+          document.getElementById('displayName').textContent   = val;
+          document.getElementById('profileName').textContent   = val;
+          document.getElementById('avatarInitial').textContent = val.charAt(0).toUpperCase();
+        }
+        if (currentField === 'email')
+          document.getElementById('displayEmail').textContent = val;
+        document.getElementById('editSuccess').classList.add('visible');
+        setTimeout(closeModal, 900);
+      } else {
+        errorDiv.textContent = data.error || 'Что-то пошло не так.';
+        errorDiv.classList.add('visible');
+        input.classList.add('invalid');
+      }
+    } catch (err) {
+      errorDiv.textContent = 'Ошибка запроса: ' + err.message;
+      errorDiv.classList.add('visible');
+    }
+    btn.disabled = false;
+  }
+
+  async function confirmDelete() {
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', CSRF);
+    try {
+      const res  = await fetch('/profile/delete/', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) window.location.href = data.redirect;
+    } catch { alert('Ошибка сети. Попробуйте ещё раз.'); }
+    btn.disabled = false;
+  }
+</script>
+{% endblock %}

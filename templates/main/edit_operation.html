@@ -1,0 +1,672 @@
+{% extends "base/base.html" %}
+
+{% block body %}
+
+<style>
+
+  /* ── Page ── */
+  .add-op-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1.25rem 2rem;
+    box-sizing: border-box;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(45,106,79,.05) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 30% at 85% 90%, rgba(45,106,79,.03) 0%, transparent 60%);
+  }
+
+  /* ── Card ── */
+  .add-op-card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: var(--sh-xl);
+    animation: opFadeIn 0.35s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes opFadeIn {
+    from { opacity: 0; transform: translateY(20px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── Header ── */
+  .add-op-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+    padding-bottom: 1.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .add-op-back {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border2);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-decoration: none;
+    flex-shrink: 0; transition: all .2s;
+  }
+  .add-op-back:hover {
+    background: var(--p); color: #fff; border-color: var(--p);
+    box-shadow: 0 4px 12px var(--pglow);
+  }
+
+  .add-op-title-wrap { min-width: 0; flex: 1; }
+  .add-op-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    border: 1px solid; border-radius: 40px;
+    font-family: var(--display); font-size: .58rem;
+    font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; padding: .2rem .6rem;
+    margin-bottom: .35rem;
+  }
+  .add-op-badge.expense {
+    background: var(--expense-bg); border-color: rgba(192,57,43,.22); color: var(--expense);
+  }
+  .add-op-badge.income {
+    background: var(--income-bg); border-color: rgba(30,140,90,.25); color: var(--income);
+  }
+  .add-op-title {
+    font-family: var(--display); font-size: 1.45rem; font-weight: 700;
+    color: var(--text); margin: 0; letter-spacing: -.02em;
+  }
+  .add-op-subtitle { font-size: .74rem; color: var(--muted); margin-top: .18rem; }
+  .add-op-required { color: var(--expense); }
+
+  /* ── General error ── */
+  .gen-error {
+    display: none; align-items: center; gap: .42rem;
+    background: rgba(192,57,43,.07); border: 1px solid rgba(192,57,43,.22);
+    border-radius: 10px; padding: .58rem .9rem;
+    font-size: .78rem; color: var(--expense);
+    margin-bottom: .95rem; line-height: 1.5;
+    animation: shake .32s ease;
+  }
+  .gen-error.visible { display: flex; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+
+  /* ── Form ── */
+  .add-op-form-grid { display: flex; flex-direction: column; gap: 1.15rem; }
+  .add-op-field { display: flex; flex-direction: column; gap: .34rem; }
+  .add-op-label {
+    font-family: var(--display); font-size: .62rem; font-weight: 700;
+    text-transform: uppercase; color: var(--muted); letter-spacing: .08em;
+  }
+
+  /* ── Inputs ── */
+  .add-op-input,
+  .add-op-select,
+  .add-op-textarea {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--border2);
+    color: var(--text); border-radius: 11px; padding: .76rem .95rem;
+    font-size: .92rem; font-family: var(--ui); outline: none;
+    transition: border-color .18s, box-shadow .18s, background .18s;
+    box-sizing: border-box; -webkit-appearance: none; appearance: none;
+  }
+  .add-op-input:focus, .add-op-select:focus, .add-op-textarea:focus {
+    border-color: var(--p); background: #fff; box-shadow: 0 0 0 3px var(--pglow);
+  }
+  .add-op-input::placeholder, .add-op-textarea::placeholder { color: var(--muted); opacity: .6; }
+  .add-op-input.field-error, .add-op-select.field-error {
+    border-color: var(--expense) !important;
+    box-shadow: 0 0 0 2.5px var(--expense-glow) !important;
+    background: #fff !important;
+  }
+
+  /* Select chevron */
+  .add-op-select {
+    background-image: url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%238c857c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .95rem center;
+    padding-right: 2.4rem; cursor: pointer;
+  }
+
+  /* Amount hero */
+  .amount-container { position: relative; display: flex; align-items: center; }
+  .amount-symbol {
+    position: absolute; left: .95rem;
+    font-family: var(--display); font-size: .72rem; font-weight: 700;
+    color: var(--muted); letter-spacing: .04em;
+    pointer-events: none; user-select: none;
+  }
+  .amount-uzs {
+    position: absolute; right: .85rem;
+    font-family: var(--display); font-size: .62rem; font-weight: 700;
+    color: var(--muted); letter-spacing: .05em; pointer-events: none;
+    background: var(--bg2); border: 1px solid var(--border);
+    padding: .2rem .46rem; border-radius: 5px;
+  }
+  .add-op-input.amount {
+    font-family: var(--mono); font-size: 2.1rem; font-weight: 600;
+    padding-left: 3rem; padding-right: 3.8rem;
+    letter-spacing: -.04em;
+  }
+  .add-op-input.amount.expense { color: var(--expense); }
+  .add-op-input.amount.income  { color: var(--income); }
+  .add-op-input.amount::placeholder { color: var(--border2); }
+
+  /* Date/time pickers */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator { opacity: .45; cursor: pointer; }
+
+  /* Two-col row */
+  .add-op-row { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+
+  /* Category pills */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: .5rem;
+  }
+  .cat-item {
+    border: 1.5px solid var(--border); background: var(--card);
+    border-radius: 12px; padding: .6rem .4rem .5rem;
+    display: flex; flex-direction: column; align-items: center; gap: .28rem;
+    cursor: pointer; transition: all .18s; text-align: center;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  .cat-item:hover { border-color: var(--p); box-shadow: 0 2px 8px var(--pglow); }
+  .cat-item.selected {
+    border-color: var(--p); background: var(--plight);
+    box-shadow: 0 0 0 2px var(--pglow);
+  }
+  .cat-item.field-error { border-color: var(--expense) !important; }
+  .cat-img-wrap { width: 34px; height: 34px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--bg2); }
+  .cat-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-emoji-wrap { width: 34px; height: 34px; border-radius: 8px; background: var(--bg2); display: grid; place-items: center; font-size: 1.1rem; }
+  .cat-name { font-size: .62rem; font-weight: 600; color: var(--text2); line-height: 1.2; }
+  .cat-item.selected .cat-name { color: var(--p); font-weight: 700; }
+
+  /* Field error text */
+  .error-text {
+    display: flex; align-items: center; gap: .3rem;
+    color: var(--expense); font-size: .7rem; margin-top: .18rem;
+  }
+  .error-text::before {
+    content: '!'; display: inline-grid; place-items: center;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--expense); color: #fff;
+    font-size: .58rem; font-weight: 800; flex-shrink: 0;
+  }
+
+  /* ── Actions ── */
+  .add-op-actions {
+    display: grid; grid-template-columns: auto 1fr; gap: .85rem;
+    margin-top: .35rem;
+  }
+  .btn-delete {
+    display: flex; align-items: center; justify-content: center; gap: .42rem;
+    padding: 0 1.2rem; min-height: 50px; border-radius: 12px;
+    background: rgba(192,57,43,.07); border: 1.5px solid rgba(192,57,43,.22);
+    color: var(--expense); font-family: var(--display); font-weight: 600;
+    font-size: .84rem; cursor: pointer; white-space: nowrap; transition: all .18s;
+  }
+  .btn-delete:hover { background: var(--expense); color: #fff; border-color: var(--expense); box-shadow: 0 4px 14px var(--expense-glow); }
+  .btn-save {
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    background: linear-gradient(135deg, var(--p) 0%, var(--p2) 100%);
+    color: #fff; border: none; padding: .92rem 1rem; border-radius: 12px;
+    font-family: var(--display); font-weight: 700; font-size: .9rem;
+    letter-spacing: .02em; cursor: pointer;
+    box-shadow: 0 4px 16px var(--pglow); transition: all .2s; min-height: 50px;
+  }
+  .btn-save:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 7px 22px var(--pglow); }
+  .btn-save:disabled { opacity: .6; cursor: not-allowed; transform: none; filter: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin .55s linear infinite; flex-shrink: 0;
+  }
+
+  /* ── Delete modal — bottom sheet ── */
+  .modal-ov {
+    position: fixed; inset: 0; background: rgba(22,19,14,.5);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 300; opacity: 0; pointer-events: none; transition: opacity .22s;
+  }
+  .modal-ov.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 1.2rem 1.8rem 2.5rem;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 -16px 48px rgba(22,19,14,.15);
+    transform: translateY(40px);
+    transition: transform .28s cubic-bezier(.22,1,.36,1);
+  }
+  .modal-ov.open .modal { transform: translateY(0); }
+  .modal-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--border2); margin: 0 auto 1.4rem;
+  }
+  .modal-icon { font-size: 2rem; text-align: center; margin-bottom: .5rem; }
+  .modal-title {
+    font-family: var(--display); font-size: 1.1rem; font-weight: 700;
+    color: var(--text); text-align: center; margin-bottom: .4rem;
+  }
+  .modal-body { font-size: .82rem; color: var(--muted); line-height: 1.65; text-align: center; margin-bottom: 1.4rem; }
+  .modal-btns { display: flex; gap: .65rem; }
+  .modal-cancel {
+    flex: 1; padding: .82rem; border-radius: 11px;
+    border: 1.5px solid var(--border2); background: var(--bg);
+    color: var(--muted); font-family: var(--display); font-weight: 600;
+    font-size: .84rem; cursor: pointer; transition: all .15s;
+  }
+  .modal-cancel:hover { border-color: var(--muted); color: var(--text); }
+  .modal-confirm {
+    flex: 1.4; padding: .82rem; border-radius: 11px; border: none;
+    background: var(--expense); color: #fff;
+    font-family: var(--display); font-weight: 700; font-size: .84rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .4rem;
+    transition: opacity .15s;
+  }
+  .modal-confirm:disabled { opacity: .55; cursor: not-allowed; }
+  .modal-confirm:hover:not(:disabled) { filter: brightness(1.08); }
+
+  @media (min-width: 560px) {
+    .modal-ov { align-items: center; }
+    .modal { border-radius: 20px; max-width: 360px; padding: 1.8rem 2rem 2rem; }
+    .modal-handle { display: none; }
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 520px) {
+    .add-op-page   { padding: 4rem .75rem 1.5rem; align-items: flex-start; }
+    .add-op-card   { padding: 1.4rem 1.1rem; border-radius: 20px; }
+    .add-op-input.amount { font-size: 1.75rem; }
+    .add-op-title  { font-size: 1.25rem; }
+  }
+  @media (max-width: 380px) {
+    .add-op-row    { grid-template-columns: 1fr; }
+    .add-op-actions { grid-template-columns: 1fr; }
+    .cat-grid      { grid-template-columns: repeat(3, 1fr); }
+  }
+
+</style>
+
+<div class="add-op-page">
+  <div class="add-op-card">
+
+    <!-- ── Header ── -->
+    <div class="add-op-header">
+      <a href="/" class="add-op-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div class="add-op-title-wrap">
+        <div class="add-op-badge {% if operation.type == 'expense' %}expense{% else %}income{% endif %}">
+          {% if operation.type == 'expense' %}
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
+            Расход
+          {% else %}
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Доход
+          {% endif %}
+        </div>
+        <h1 class="add-op-title">Редактирование</h1>
+        <p class="add-op-subtitle">Измените нужные поля и сохраните</p>
+      </div>
+    </div>
+
+    <!-- ── General error ── -->
+    <div class="gen-error" id="generalError">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <span id="genErrText"></span>
+    </div>
+
+    <!-- ── Form ── -->
+    <form id="editOpForm" method="POST" class="add-op-form-grid">
+      {% csrf_token %}
+      <input type="hidden" name="type" value="{{ operation.type }}">
+
+      <!-- Amount -->
+      <div class="add-op-field">
+        <label class="add-op-label">
+          Сумма <span class="add-op-required">*</span>
+        </label>
+        <div class="amount-container">
+          <span class="amount-symbol">UZS</span>
+          <!-- Visible formatted input -->
+          <input
+            type="text"
+            id="amount_display"
+            inputmode="numeric"
+            class="add-op-input amount {% if operation.type == 'expense' %}expense{% else %}income{% endif %}"
+            placeholder="0"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          >
+          <!-- Hidden value sent to backend -->
+          <input type="hidden" name="amount" id="id_amount">
+          <span class="amount-uzs">сум</span>
+        </div>
+        <div id="err_amount"></div>
+      </div>
+
+      <!-- Category -->
+      <div class="add-op-field">
+        <label class="add-op-label">
+          Категория <span class="add-op-required">*</span>
+        </label>
+        {% if categories %}
+        <div class="cat-grid" id="catGrid">
+          {% for cat in categories %}{% if cat.operation_type == operation.type %}
+          <div class="cat-item {% if cat.id == operation.category_id %}selected{% endif %}"
+               data-id="{{ cat.id }}" onclick="selectCat(this)">
+            <div class="cat-img-wrap">
+              {% if cat.photo_url %}
+                <img src="{{ cat.photo_url }}" alt="{{ cat.name }}" loading="lazy">
+              {% else %}
+                <div class="cat-emoji-wrap">🗂️</div>
+              {% endif %}
+            </div>
+            <span class="cat-name">{{ cat.name }}</span>
+          </div>
+          {% endif %}{% endfor %}
+        </div>
+        <input type="hidden" name="category" id="id_category"
+               value="{{ operation.category_id }}">
+        {% else %}
+        <select name="category" id="id_category" class="add-op-select" required>
+          <option value="" disabled>Выберите категорию…</option>
+          {% for cat in categories %}{% if cat.operation_type == operation.type %}
+            <option value="{{ cat.id }}"
+              {% if cat.id == operation.category_id %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endif %}{% endfor %}
+        </select>
+        {% endif %}
+        <div id="err_category"></div>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="add-op-row">
+        <div class="add-op-field">
+          <label class="add-op-label">
+            Дата <span class="add-op-required">*</span>
+          </label>
+          <input type="date" name="date" id="id_date" class="add-op-input"
+                 value="{{ operation.date|date:'Y-m-d' }}" required>
+          <div id="err_date"></div>
+        </div>
+        <div class="add-op-field">
+          <label class="add-op-label">
+            Время <span class="add-op-required">*</span>
+          </label>
+          <input type="time" name="time" id="id_time" class="add-op-input"
+                 value="{{ operation.date|date:'H:i' }}" required>
+          <div id="err_time"></div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="add-op-field">
+        <label class="add-op-label">
+          Описание
+          <span style="color:var(--muted);font-size:.56rem;font-weight:500;
+                       text-transform:none;letter-spacing:0;">(необязательно)</span>
+        </label>
+        <textarea name="description" id="id_description" class="add-op-textarea"
+                  rows="2" placeholder="Комментарий к операции…">{{ operation.description }}</textarea>
+        <div id="err_description"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="add-op-actions">
+        <button type="button" class="btn-delete" onclick="openDelModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+          Удалить
+        </button>
+        <button type="submit" class="btn-save" id="saveBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Сохранить
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ── Delete bottom-sheet modal ── -->
+<div class="modal-ov" id="delModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-icon">🗑️</div>
+    <div class="modal-title">Удалить операцию?</div>
+    <div class="modal-body">
+      Операция будет удалена навсегда.<br>Это действие нельзя отменить.
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeDelModal()">Отмена</button>
+      <button class="modal-confirm" id="delConfirmBtn" onclick="confirmDelete()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+        </svg>
+        Да, удалить
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CSRF = '{{ csrf_token }}';
+
+  /* ══════════════════════════════════════════
+     1. Amount: pre-fill with existing value + live format with spaces
+  ══════════════════════════════════════════ */
+  const amtDisplay = document.getElementById('amount_display');
+  const amtHidden  = document.getElementById('id_amount');
+
+  // Narrow no-break space every 3 digits
+  function formatSpaces(raw) {
+    return raw.replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
+  }
+
+  // Pre-fill: parse as float, take integer part to avoid extra zeros
+  (function prefill() {
+    const num = parseFloat('{{ operation.amount }}');
+    if (!isNaN(num) && num > 0) {
+      const raw = String(Math.round(num));
+      amtDisplay.value = formatSpaces(raw);
+      amtHidden.value  = raw;
+    }
+  })();
+
+  amtDisplay.addEventListener('input', () => {
+    const raw = amtDisplay.value.replace(/\D/g, '');
+    amtDisplay.value = raw ? formatSpaces(raw) : '';
+    amtHidden.value  = raw;
+    clearErr('amount');
+  });
+
+  // Block non-numeric on desktop
+  amtDisplay.addEventListener('keydown', e => {
+    const nav = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+    if (!nav.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+  });
+
+  /* ══════════════════════════════════════════
+     2. Category selection
+  ══════════════════════════════════════════ */
+  function selectCat(el) {
+    document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('selected', 'field-error'));
+    el.classList.add('selected');
+    document.getElementById('id_category').value = el.dataset.id;
+    clearErr('category');
+  }
+
+  /* ══════════════════════════════════════════
+     3. Error helpers
+  ══════════════════════════════════════════ */
+  function clearErr(field) {
+    if (field === 'amount') {
+      amtDisplay.classList.remove('field-error');
+    } else {
+      const inp = document.getElementById('id_' + field);
+      if (inp) inp.classList.remove('field-error');
+    }
+    const errEl = document.getElementById('err_' + field);
+    if (errEl) errEl.innerHTML = '';
+    // Also hide general error
+    document.getElementById('generalError').classList.remove('visible');
+  }
+
+  function showErr(field, msg) {
+    if (field === 'amount') {
+      amtDisplay.classList.add('field-error');
+    } else if (field === 'category') {
+      document.querySelectorAll('.cat-item').forEach(c => c.classList.add('field-error'));
+    } else {
+      const inp = document.getElementById('id_' + field);
+      if (inp) inp.classList.add('field-error');
+    }
+    const errEl = document.getElementById('err_' + field);
+    if (errEl) errEl.innerHTML = `<div class="error-text">${msg}</div>`;
+  }
+
+  function showGenErr(msg) {
+    const el = document.getElementById('generalError');
+    document.getElementById('genErrText').textContent = msg;
+    el.classList.remove('visible');
+    void el.offsetWidth; // re-trigger animation
+    el.classList.add('visible');
+  }
+
+  // Clear on interact
+  ['id_date', 'id_time', 'id_description'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => clearErr(id.replace('id_', '')));
+  });
+
+  /* ══════════════════════════════════════════
+     4. Delete modal
+  ══════════════════════════════════════════ */
+  function openDelModal() {
+    document.getElementById('delModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDelModal() {
+    document.getElementById('delModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('delModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('delModal')) closeDelModal();
+  });
+
+  async function confirmDelete() {
+    const btn = document.getElementById('delConfirmBtn');
+    btn.disabled = true;
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', CSRF);
+    try {
+      const res  = await fetch(window.location.href.replace('/edit/', '/delete/'), {
+        method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = data.redirect || '/';
+      } else {
+        closeDelModal();
+        showGenErr(data.error || 'Не удалось удалить. Попробуйте ещё раз.');
+      }
+    } catch {
+      closeDelModal();
+      showGenErr('Ошибка сети. Попробуйте ещё раз.');
+    }
+    btn.disabled = false;
+  }
+
+  /* ══════════════════════════════════════════
+     5. Save form submit
+  ══════════════════════════════════════════ */
+  document.getElementById('editOpForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    // Clear all errors
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+    document.querySelectorAll('[id^="err_"]').forEach(el => el.innerHTML = '');
+    document.getElementById('generalError').classList.remove('visible');
+
+    // Client validation: amount
+    if (!amtHidden.value || parseInt(amtHidden.value) <= 0) {
+      showErr('amount', 'Введите сумму');
+      amtDisplay.focus();
+      return;
+    }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = `<div class="btn-spinner"></div> Сохранение…`;
+
+    try {
+      const res  = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: new FormData(this)
+      });
+
+      // Handle redirect (non-JSON)
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        window.location.href = res.url || '/';
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.success) {
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Сохранено!`;
+        btn.style.background = 'linear-gradient(135deg,var(--income),#27ae60)';
+        setTimeout(() => { window.location.href = data.redirect || '/'; }, 700);
+
+      } else if (data.errors) {
+        for (const [field, msgs] of Object.entries(data.errors)) {
+          showErr(field, Array.isArray(msgs) ? msgs[0] : msgs);
+        }
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+
+      } else {
+        showGenErr(data.error || 'Что-то пошло не так. Попробуйте ещё раз.');
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+      }
+
+    } catch {
+      showGenErr('Ошибка сети. Проверьте соединение.');
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+    }
+  });
+</script>
+
+{% endblock %}

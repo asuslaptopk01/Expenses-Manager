@@ -1,0 +1,592 @@
+{% extends "base/base.html" %}
+
+{% block body %}
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --pl:        #f7f5f0;
+    --pl2:       #eeeae0;
+    --champ:     #ddd4bb;
+    --champ2:    #c8b896;
+    --silk:      #faf9f6;
+    --ink:       #1a1814;
+    --ink2:      #2d2a24;
+    --mt:        #8a8070;
+    --mt2:       #b5ad9e;
+    --border-c:  rgba(208,196,170,0.35);
+    --border2-c: rgba(208,196,170,0.58);
+    --income-c:  #2e7a56;
+    --expense-c: #9e3a3a;
+    --card-s:    0 2px 16px rgba(100,85,55,0.07), 0 1px 3px rgba(100,85,55,0.04);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Layout offset formula:
+       base header  = 56px  (desktop) / 52px (mobile ≤520px)
+       tabs bar     = 46px  (both)
+       total offset = 102px (desktop) / 98px (mobile)
+     We add only a tiny top padding inside container — no extra gap.
+  ───────────────────────────────────────────────────────────── */
+  .m-wrap {
+    padding-top: 102px;   /* header(56) + tabs(46) */
+    padding-bottom: 4rem;
+    min-height: 100vh;
+    background: #f5f2ec;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .m-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: .6rem 1rem 0;   /* minimal top — balance card appears immediately */
+  }
+
+  /* TABS — anchored exactly under base header */
+  .tabs {
+    position: fixed; top: 56px; left: 0; right: 0; z-index: 99;
+    display: flex;
+    background: rgba(250,249,246,0.97);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border2-c);
+    height: 46px;
+  }
+  .tab {
+    flex: 1; height: 46px; padding: 0 .5rem;
+    background: transparent; border: none;
+    color: var(--mt); cursor: pointer; position: relative;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .76rem; font-weight: 600;
+    letter-spacing: .04em; text-transform: uppercase; transition: color .2s;
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab-icon { font-size: 1rem; line-height: 1; }
+  .tab.active { color: var(--ink2); }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: 0;
+    left: 12%; right: 12%; height: 2px;
+    background: var(--champ2); border-radius: 2px 2px 0 0;
+  }
+  .tab:hover:not(.active) { color: var(--ink2); }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* BALANCE CARD */
+  .balance-card {
+    background: linear-gradient(148deg, #ede6d8 0%, #ddd2bc 32%, #cbbfa2 66%, #b8a87e 100%);
+    border-radius: 24px;
+    padding: 2rem 2rem 1.8rem;
+    text-align: center;
+    position: relative; overflow: hidden;
+    margin-bottom: .9rem;
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.45) inset,
+      0 1px 0 rgba(255,255,255,.75) inset,
+      0 14px 44px rgba(150,130,90,.18),
+      0 4px 12px rgba(150,130,90,.1);
+    animation: fadeUp .5s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .balance-card .coins-rain {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 24px;
+  }
+  .uzs-drop {
+    position: absolute; top: -30px;
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem; font-weight: 500;
+    color: rgba(70,52,24,.18);
+    animation: uzs-fall linear infinite;
+    white-space: nowrap; pointer-events: none; user-select: none;
+  }
+  @keyframes uzs-fall {
+    0%   { transform: translateY(-30px) rotate(-4deg); opacity: 0; }
+    10%  { opacity: 1; }
+    82%  { opacity: .5; }
+    100% { transform: translateY(240px) rotate(4deg); opacity: 0; }
+  }
+  .balance-card .card-shine {
+    position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.88), transparent);
+  }
+  .balance-card::before {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .balance-card::after {
+    content: ''; position: absolute; bottom: -50px; left: -30px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .bal-label {
+    font-size: .58rem; font-weight: 700; letter-spacing: .22em;
+    text-transform: uppercase; color: rgba(55,40,15,.4);
+    margin-bottom: .6rem; position: relative; z-index: 1;
+  }
+  .bal-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 3.6rem; font-weight: 500;
+    color: rgba(28,20,8,.78); letter-spacing: -.02em; line-height: 1;
+    position: relative; z-index: 1;
+    text-shadow: 0 1px 3px rgba(255,255,255,.35);
+    animation: countUp .7s cubic-bezier(0.22,1,0.36,1) both;
+    word-break: break-all;
+  }
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.93) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  /* UZS suffix shown after number — readable, not superscript */
+  .bal-suffix {
+    font-size: 1rem; opacity: .48;
+    font-family: 'DM Sans', sans-serif; font-weight: 500;
+    margin-left: .35rem; letter-spacing: .04em;
+    vertical-align: baseline;
+  }
+  .bal-user {
+    margin-top: .65rem; font-size: .8rem;
+    color: rgba(55,40,15,.42); position: relative; z-index: 1;
+  }
+  .bal-user strong { color: rgba(38,26,8,.62); font-weight: 600; }
+
+  /* ACTION BUTTONS */
+  .actions {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: .7rem; margin-bottom: 1.4rem;
+  }
+  .act-btn {
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 50px; border-radius: 15px;
+    font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 600;
+    cursor: pointer; transition: all .22s cubic-bezier(0.22,1,0.36,1);
+    text-decoration: none; border: 1.5px solid transparent;
+    -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
+    box-shadow: var(--card-s);
+  }
+  .act-btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 55%);
+    pointer-events: none; border-radius: inherit;
+  }
+  .act-btn.expence { background: #fef1f1; color: var(--expense-c); border-color: rgba(158,58,58,.18); }
+  .act-btn.income  { background: #f1faf5; color: var(--income-c);  border-color: rgba(46,122,86,.18); }
+  .act-btn:active  { transform: scale(.98); }
+  @media (hover: hover) {
+    .act-btn.expence:hover { background: var(--expense-c); color: #fff; border-color: var(--expense-c); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(158,58,58,.22); }
+    .act-btn.income:hover  { background: var(--income-c);  color: #fff; border-color: var(--income-c);  transform: translateY(-2px); box-shadow: 0 8px 24px rgba(46,122,86,.22); }
+  }
+  .act-icon { font-size: 1.1rem; }
+
+  /* SECTION LABEL */
+  .sec-label {
+    font-size: .63rem; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--mt); margin-bottom: .7rem;
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border-c); }
+
+  /* HISTORY */
+  .history { display: flex; flex-direction: column; gap: .42rem; }
+  .h-item {
+    display: flex; align-items: center; gap: .8rem;
+    background: #fff; border: 1px solid var(--border-c);
+    border-radius: 15px; padding: .8rem .95rem;
+    transition: all .2s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: var(--card-s); -webkit-tap-highlight-color: transparent;
+  }
+  .h-item:active { transform: scale(.99); }
+  @media (hover: hover) {
+    .h-item:hover { border-color: var(--champ2); box-shadow: 0 6px 24px rgba(100,85,55,.12); transform: translateX(3px); }
+  }
+  .cat-sticker {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--pl); border: 1px solid var(--border-c);
+    display: grid; place-items: center; font-size: 1.25rem; flex-shrink: 0;
+  }
+  .cat-img { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-c); }
+  .h-info { flex: 1; min-width: 0; }
+  .h-cat  { font-weight: 600; font-size: .88rem; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-desc { font-size: .72rem; color: var(--mt); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-right { display: flex; align-items: center; gap: .55rem; flex-shrink: 0; }
+  .h-right-vals { text-align: right; }
+  .h-amt { font-family: 'DM Mono', monospace; font-size: .84rem; font-weight: 500; white-space: nowrap; }
+  .h-amt.income  { color: var(--income-c); }
+  .h-amt.expense { color: var(--expense-c); }
+  .h-date { font-size: .63rem; color: var(--mt2); margin-top: 2px; }
+  .edit-btn {
+    width: 34px; height: 34px; border-radius: 9px;
+    border: 1.5px solid var(--border2-c); background: var(--pl);
+    display: grid; place-items: center; cursor: pointer;
+    color: var(--mt); flex-shrink: 0; text-decoration: none; transition: all .18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .edit-btn:active { background: var(--champ2); border-color: var(--champ2); transform: scale(.92); }
+  @media (hover: hover) {
+    .edit-btn:hover { background: var(--ink2); border-color: var(--ink2); color: #fff; }
+  }
+  .edit-btn svg { width: 13px; height: 13px; fill: currentColor; }
+  .empty {
+    text-align: center; padding: 3rem 1rem; color: var(--mt);
+    background: #fff; border-radius: 18px; border: 1.5px dashed var(--border2-c);
+  }
+  .empty-ico { font-size: 2.4rem; margin-bottom: .7rem; opacity: .5; }
+  .empty p   { font-size: .86rem; line-height: 1.6; }
+
+  /* ANALYTICS STAT CARDS */
+  .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: .7rem; margin-bottom: 1.2rem; }
+  .stat-card {
+    border-radius: 16px; padding: 1.1rem .95rem;
+    box-shadow: var(--card-s); position: relative; overflow: hidden; border: 1px solid var(--border-c);
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0;
+  }
+  .stat-card.income-card  { background: linear-gradient(155deg, #eef8f3 0%, #fafff8 65%, #fff 100%); }
+  .stat-card.expense-card { background: linear-gradient(155deg, #fdf2f2 0%, #fff9f9 65%, #fff 100%); }
+  .stat-card.net-card     { background: linear-gradient(155deg, #faf6ee 0%, #fdfaf5 65%, #fff 100%); }
+  .stat-card.income-card::before  { background: linear-gradient(90deg, #2e7a56, #6dba90); }
+  .stat-card.expense-card::before { background: linear-gradient(90deg, #9e3a3a, #d47a7a); }
+  .stat-card.net-card::before     { background: linear-gradient(90deg, #c8b896, #e0d5bc); }
+  .stat-icon { font-size: 1.2rem; margin-bottom: .28rem; }
+  .stat-lbl { font-size: .56rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--mt); margin-bottom: .28rem; }
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; letter-spacing: -.02em; line-height: 1.15; word-break: break-all; }
+  .stat-val.income  { color: var(--income-c); }
+  .stat-val.expense { color: var(--expense-c); }
+  .stat-val.net     { color: var(--ink2); }
+  .stat-uzs { font-size: .54rem; opacity: .55; font-family: 'DM Sans', sans-serif; font-weight: 500; letter-spacing: .04em; }
+  .stat-sub { font-size: .62rem; color: var(--mt2); margin-top: .2rem; }
+
+  /* CHART FILTER */
+  .chart-filter-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .month-sel {
+    background: #fff; border: 1.5px solid var(--border2-c); color: var(--ink2);
+    border-radius: 11px; padding: .48rem .8rem; padding-right: 1.9rem;
+    font-size: .8rem; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    cursor: pointer; outline: none; appearance: none; min-height: 38px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238a8070' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .55rem center;
+  }
+  .month-sel:focus { border-color: var(--champ2); box-shadow: 0 0 0 3px rgba(200,184,150,.2); }
+
+  /* CHART CARDS */
+  .chart-stack { display: flex; flex-direction: column; gap: .9rem; }
+  .chart-card {
+    background: #fff; border: 1px solid var(--border-c);
+    border-radius: 18px; padding: 1.4rem 1.3rem 1.2rem; box-shadow: var(--card-s);
+  }
+  .chart-head { margin-bottom: 1.2rem; }
+  .chart-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.22rem; font-weight: 500; color: var(--ink2);
+    display: flex; align-items: center; gap: .4rem;
+  }
+  .chart-subtitle { font-size: .73rem; color: var(--mt); margin-top: .15rem; }
+  .chart-body { display: flex; align-items: flex-start; gap: 1.6rem; flex-wrap: wrap; }
+  .canvas-box { width: 190px; height: 190px; flex-shrink: 0; position: relative; }
+  .canvas-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%); text-align: center; pointer-events: none;
+  }
+  .c-val { font-family: 'DM Mono', monospace; font-size: .95rem; font-weight: 500; display: block; line-height: 1.2; color: var(--ink2); }
+  .c-lbl { font-size: .54rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--mt); }
+  .legend { flex: 1; display: flex; flex-direction: column; gap: .45rem; min-width: 130px; }
+  .leg-item { display: flex; align-items: center; gap: .42rem; }
+  .leg-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+  .leg-name { flex: 1; color: var(--ink2); font-size: .77rem; }
+  .leg-pct { font-size: .67rem; color: var(--mt2); }
+  .leg-val { font-family: 'DM Mono', monospace; font-size: .74rem; font-weight: 500; color: var(--ink2); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .section.active .m-container > * { animation: fadeUp .36s cubic-bezier(0.22,1,0.36,1) both; }
+  .section.active .m-container > *:nth-child(1) { animation-delay: .03s; }
+  .section.active .m-container > *:nth-child(2) { animation-delay: .08s; }
+  .section.active .m-container > *:nth-child(3) { animation-delay: .13s; }
+  .section.active .m-container > *:nth-child(4) { animation-delay: .18s; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    /* header(52) + tabs(46) = 98px on mobile */
+    .m-wrap { padding-top: 98px; }
+    .tabs { top: 52px; height: 46px; }
+    .m-container { padding: .5rem .85rem 0; }  /* extra tight — card right under tabs */
+    .balance-card { padding: 1.55rem 1.2rem 1.45rem; border-radius: 18px; margin-bottom: .75rem; }
+    .bal-amount { font-size: 2.5rem; letter-spacing: -.01em; }
+    .bal-suffix { font-size: .8rem; }
+    .actions { gap: .55rem; margin-bottom: 1.1rem; }
+    .act-btn { min-height: 50px; border-radius: 13px; font-size: .84rem; }
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .stat-val { font-size: 1rem; }
+    .chart-body { justify-content: center; gap: .9rem; }
+    .canvas-box { width: 155px; height: 155px; }
+    .chart-card { padding: 1.1rem .9rem; }
+    .h-item { gap: .65rem; padding: .75rem .8rem; }
+    .cat-sticker, .cat-img { width: 38px; height: 38px; border-radius: 10px; }
+    .h-amt { font-size: .8rem; }
+  }
+  @media (max-width: 400px) {
+    .bal-amount { font-size: 2.1rem; }
+    .stat-row { grid-template-columns: 1fr; }
+    .canvas-box { width: 145px; height: 145px; }
+  }
+</style>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab active" data-target="main">
+    <span class="tab-icon">💳</span> Дашборд
+  </button>
+  <button class="tab" data-target="analytics">
+    <span class="tab-icon">📊</span> Аналитика
+  </button>
+</nav>
+
+<div class="m-wrap">
+
+<!-- DASHBOARD -->
+<section id="main" class="section active">
+  <div class="m-container">
+
+    <div class="balance-card">
+      <div class="card-shine"></div>
+      <div class="coins-rain" id="coinsRain"></div>
+      <div class="bal-label">Текущий баланс</div>
+      <div class="bal-amount" id="balanceDisplay">
+        <span id="balanceNum">{{ balance }}</span><span class="bal-suffix">UZS</span>
+      </div>
+      <div class="bal-user">Добро пожаловать, <strong>{{ first_name }}</strong></div>
+    </div>
+
+    <div class="actions">
+      <a href="/expense/add/" class="act-btn expence">
+        <span class="act-icon">📤</span> Расход
+      </a>
+      <a href="/income/add/" class="act-btn income">
+        <span class="act-icon">📥</span> Доход
+      </a>
+    </div>
+
+    <div class="sec-label">История транзакций за последние 30 дней</div>
+    <div class="history">
+      {% for operation in operations %}
+      <div class="h-item">
+        {% if operation.category.photo_url %}
+          <img src="{{ operation.category.photo_url }}" alt="{{ operation.category.name }}" class="cat-img">
+        {% else %}
+          <div class="cat-sticker">{% if operation.type == 'income' %}💰{% else %}🛒{% endif %}</div>
+        {% endif %}
+        <div class="h-info">
+          <div class="h-cat">{{ operation.category }}</div>
+          <div class="h-desc">{{ operation.description }}</div>
+        </div>
+        <div class="h-right">
+          <div class="h-right-vals">
+            <div class="h-amt {{ operation.type }}" data-raw="{{ operation.amount }}">
+              {% if operation.type == 'income' %}+{% else %}−{% endif %} <span class="amt-num">{{ operation.amount }}</span> UZS
+            </div>
+            <div class="h-date">{{ operation.date }}</div>
+          </div>
+          <a href="/operations/{{ operation.id }}/edit/" class="edit-btn" title="Редактировать">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.21a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty">
+        <div class="empty-ico">🪙</div>
+        <p>Транзакций пока нет.<br>Добавьте первую!</p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ANALYTICS -->
+<section id="analytics" class="section">
+  <div class="m-container">
+
+    <div class="stat-row">
+      <div class="stat-card income-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-lbl">Доходы</div>
+        <div class="stat-val income" data-raw="{{ total_income }}">{{ total_income }} <span class="stat-uzs">UZS</span></div>
+        <div class="stat-sub">{{ income_count }} операций</div>
+      </div>
+      <div class="stat-card expense-card">
+        <div class="stat-icon">📉</div>
+        <div class="stat-lbl">Расходы</div>
+        <div class="stat-val expense" data-raw="{{ total_expense }}">{{ total_expense }} <span class="stat-uzs">UZS</span></div>
+        <div class="stat-sub">{{ expense_count }} операций</div>
+      </div>
+      <div class="stat-card net-card">
+        <div class="stat-icon">⚖️</div>
+        <div class="stat-lbl">Баланс</div>
+        <div class="stat-val net" data-raw="{{ balance }}">{{ balance }} <span class="stat-uzs">UZS</span></div>
+        <div class="stat-sub">итого</div>
+      </div>
+    </div>
+
+    <div class="chart-filter-row">
+      <div class="sec-label" style="margin:0;flex:1">По категориям</div>
+      <select class="month-sel" id="monthSelect">
+        <option value="all">За всё время</option>
+        <option value="0">Январь</option><option value="1">Февраль</option>
+        <option value="2">Март</option><option value="3">Апрель</option>
+        <option value="4">Май</option><option value="5">Июнь</option>
+        <option value="6">Июль</option><option value="7">Август</option>
+        <option value="8">Сентябрь</option><option value="9">Октябрь</option>
+        <option value="10">Ноябрь</option><option value="11">Декабрь</option>
+      </select>
+    </div>
+
+    <div class="chart-stack">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">📤 Расходы по категориям</div>
+          <div class="chart-subtitle">Куда уходят ваши деньги</div>
+        </div>
+        <div class="chart-body">
+          <div class="canvas-box">
+            <canvas id="expChart"></canvas>
+            <div class="canvas-center"><span class="c-val" id="expTotal">—</span><span class="c-lbl">итого</span></div>
+          </div>
+          <div class="legend" id="expLegend"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">📥 Доходы по категориям</div>
+          <div class="chart-subtitle">Источники ваших доходов</div>
+        </div>
+        <div class="chart-body">
+          <div class="canvas-box">
+            <canvas id="incChart"></canvas>
+            <div class="canvas-center"><span class="c-val" id="incTotal">—</span><span class="c-lbl">итого</span></div>
+          </div>
+          <div class="legend" id="incLegend"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /.m-wrap -->
+
+<script>
+  /* ── Number formatting: 1 000 000.00 UZS ── */
+  function fmtUZS(n) {
+    const num = Math.abs(+n);
+    const parts = num.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0'); // non-breaking space
+    return parts.join('.') + ' UZS';
+  }
+  function fmtShort(n) {
+    const num = Math.abs(+n);
+    const parts = num.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+    return parts.join('.');
+  }
+
+  /* Format balance display */
+  (function() {
+    const el = document.getElementById('balanceNum');
+    if (el) el.textContent = fmtShort(el.textContent.trim());
+  })();
+
+  /* Format transaction amounts */
+  document.querySelectorAll('.amt-num').forEach(el => {
+    el.textContent = fmtShort(el.textContent.trim());
+  });
+
+  /* Format stat card values */
+  document.querySelectorAll('.stat-val[data-raw]').forEach(el => {
+    const raw = el.getAttribute('data-raw');
+    const uzs = el.querySelector('.stat-uzs');
+    el.childNodes[0].textContent = fmtShort(raw) + ' ';
+  });
+
+  /* ── Falling UZS rain ── */
+  (function() {
+    const rain = document.getElementById('coinsRain');
+    if (!rain) return;
+    const words = ['UZS','000','UZS','sum','UZS','100','500','UZS'];
+    function drop() {
+      const el = document.createElement('div');
+      el.className = 'uzs-drop';
+      const dur = 2.6 + Math.random() * 2.4;
+      el.style.cssText = `left:${4+Math.random()*92}%;font-size:${.5+Math.random()*.28}rem;animation-duration:${dur}s;animation-delay:${Math.random()*1.2}s`;
+      el.textContent = words[Math.floor(Math.random()*words.length)];
+      rain.appendChild(el);
+      setTimeout(() => el.remove(), (dur + 1.5) * 1000);
+    }
+    for (let i=0; i<10; i++) setTimeout(drop, i*240);
+    setInterval(drop, 680);
+  })();
+
+  /* ── Tabs ── */
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+      if (btn.dataset.target === 'analytics' && !chartsBuilt) rebuildCharts('all');
+    });
+  });
+
+  /* ── Charts ── */
+  const PAL = ['#c8b896','#2e7a56','#9e3a3a','#4e7ebf','#8a68c0','#d4915a','#4a9e8a','#c9a44c','#7aaa4f','#c9607a'];
+  const CHART_DATA = {{ chart_data_json|safe }};
+  let chartExp, chartInc, chartsBuilt = false;
+
+  function buildDonut(id, map) {
+    const labels = Object.keys(map), vals = Object.values(map).map(Number);
+    const total = vals.reduce((a,b)=>a+b,0);
+    return new Chart(document.getElementById(id).getContext('2d'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: vals, backgroundColor: PAL, borderWidth: 3, borderColor: '#ffffff', hoverOffset: 8 }] },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${fmtUZS(c.parsed)}  (${total?((c.parsed/total)*100).toFixed(1):0}%)` } }
+        },
+        animation: { animateRotate: true, duration: 650 }
+      }
+    });
+  }
+
+  function buildLegend(legId, totId, map) {
+    const labels = Object.keys(map), vals = Object.values(map).map(Number);
+    const total = vals.reduce((a,b)=>a+b,0);
+    document.getElementById(totId).textContent = fmtShort(total);
+    document.getElementById(legId).innerHTML = labels.length
+      ? labels.map((l,i) => `<div class="leg-item"><div class="leg-dot" style="background:${PAL[i%PAL.length]}"></div><span class="leg-name">${l}</span><span class="leg-pct">${total?((vals[i]/total)*100).toFixed(1):0}%</span><span class="leg-val">${fmtUZS(vals[i])}</span></div>`).join('')
+      : '<div style="color:var(--mt);font-size:.76rem;padding:.4rem 0">Нет данных</div>';
+  }
+
+  function rebuildCharts(month='all') {
+    chartsBuilt = true;
+    let e, inc;
+    if (month==='all') { e=CHART_DATA.expense; inc=CHART_DATA.income; }
+    else { const m=CHART_DATA.months[month]||{expense:{},income:{}}; e=m.expense; inc=m.income; }
+    if (chartExp) chartExp.destroy();
+    if (chartInc) chartInc.destroy();
+    chartExp = buildDonut('expChart', e);
+    chartInc = buildDonut('incChart', inc);
+    buildLegend('expLegend','expTotal',e);
+    buildLegend('incLegend','incTotal',inc);
+  }
+
+  document.getElementById('monthSelect').addEventListener('change', e => rebuildCharts(e.target.value));
+</script>
+
+{% endblock %}

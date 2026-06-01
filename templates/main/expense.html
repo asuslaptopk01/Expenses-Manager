@@ -1,0 +1,614 @@
+{% extends "base/base.html" %}
+
+{% block body %}
+
+<style>
+
+  /* ── Page layout ── */
+  .add-op-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1.25rem 2rem;
+    box-sizing: border-box;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(192,57,43,.05) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 30% at 85% 90%, rgba(45,106,79,.03) 0%, transparent 60%);
+  }
+
+  .add-op-card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: var(--sh-xl);
+    animation: opFadeIn 0.35s cubic-bezier(.34,1.56,.64,1) both;
+  }
+
+  @keyframes opFadeIn {
+    from { opacity: 0; transform: translateY(20px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── Header ── */
+  .add-op-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+    padding-bottom: 1.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .add-op-back {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border2);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .add-op-back:hover {
+    background: var(--expense);
+    color: #fff;
+    border-color: var(--expense);
+    box-shadow: 0 4px 12px var(--expense-glow);
+  }
+
+  .add-op-title-wrap { min-width: 0; }
+
+  .add-op-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    background: var(--expense-bg);
+    border: 1px solid rgba(192,57,43,.22);
+    color: var(--expense);
+    font-family: var(--display);
+    font-size: .58rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .2rem .6rem;
+    border-radius: 40px;
+    margin-bottom: .35rem;
+  }
+
+  .add-op-title {
+    font-family: var(--display);
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    letter-spacing: -.02em;
+  }
+
+  .add-op-subtitle {
+    font-size: .74rem;
+    color: var(--muted);
+    margin-top: .18rem;
+  }
+  .add-op-required { color: var(--expense); }
+
+  /* ── Form ── */
+  .add-op-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .add-op-field {
+    display: flex;
+    flex-direction: column;
+    gap: .34rem;
+  }
+
+  .add-op-label {
+    font-family: var(--display);
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: .08em;
+  }
+
+  /* ── Inputs ── */
+  .add-op-input,
+  .add-op-select,
+  .add-op-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border2);
+    color: var(--text);
+    border-radius: 11px;
+    padding: .76rem .95rem;
+    font-size: .92rem;
+    font-family: var(--ui);
+    outline: none;
+    transition: border-color .18s, box-shadow .18s, background .18s;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .add-op-input:focus,
+  .add-op-select:focus,
+  .add-op-textarea:focus {
+    border-color: var(--expense);
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--expense-glow);
+  }
+  .add-op-input::placeholder,
+  .add-op-textarea::placeholder { color: var(--muted); opacity: .6; }
+
+  /* Select chevron */
+  .add-op-select {
+    background-image: url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%238c857c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .95rem center;
+    padding-right: 2.4rem;
+    cursor: pointer;
+  }
+
+  /* Amount */
+  .amount-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .amount-symbol {
+    position: absolute;
+    left: .95rem;
+    font-family: var(--display);
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .04em;
+    pointer-events: none;
+    user-select: none;
+  }
+  .amount-uzs {
+    position: absolute;
+    right: .85rem;
+    font-family: var(--display);
+    font-size: .62rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .05em;
+    pointer-events: none;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: .2rem .46rem;
+    border-radius: 5px;
+  }
+  .add-op-input.amount {
+    font-family: var(--mono);
+    font-size: 2.1rem;
+    font-weight: 600;
+    padding-left: 3rem;
+    padding-right: 3.8rem;
+    letter-spacing: -.04em;
+    color: var(--expense);
+  }
+  .add-op-input.amount::placeholder { color: var(--border2); }
+
+
+  /* Category grid */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: .5rem;
+  }
+  .cat-item {
+    border: 1.5px solid var(--border); background: var(--card);
+    border-radius: 12px; padding: .6rem .4rem .5rem;
+    display: flex; flex-direction: column; align-items: center; gap: .28rem;
+    cursor: pointer; transition: all .18s; text-align: center;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  .cat-item:hover { border-color: var(--p); box-shadow: 0 2px 8px var(--pglow); }
+  .cat-item.selected {
+    border-color: var(--p); background: var(--plight);
+    box-shadow: 0 0 0 2px var(--pglow);
+  }
+  .cat-item.field-error { border-color: var(--expense) !important; }
+  .cat-img-wrap {
+    width: 34px; height: 34px; border-radius: 8px;
+    overflow: hidden; flex-shrink: 0; background: var(--bg2);
+  }
+  .cat-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-emoji-wrap {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--bg2); display: grid; place-items: center; font-size: 1.1rem;
+  }
+  .cat-name { font-size: .62rem; font-weight: 600; color: var(--text2); line-height: 1.2; }
+  .cat-item.selected .cat-name { color: var(--p); font-weight: 700; }
+
+  /* Date/time pickers */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: .45; cursor: pointer;
+  }
+
+  /* Two-column row */
+  .add-op-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .85rem;
+  }
+
+  /* Error messages */
+  .error-text {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    color: var(--expense);
+    font-size: .7rem;
+    margin-top: .18rem;
+  }
+  .error-text::before {
+    content: '';
+    display: block;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--expense) url("data:image/svg+xml,%3Csvg width='7' height='7' viewBox='0 0 7 7' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='7' font-family='sans-serif' font-weight='bold'%3E!%3C/text%3E%3C/svg%3E") center/contain no-repeat;
+    flex-shrink: 0;
+  }
+  .field-error {
+    border-color: var(--expense) !important;
+    box-shadow: 0 0 0 2.5px var(--expense-glow) !important;
+    background: #fff !important;
+  }
+
+  /* ── Actions ── */
+  .add-op-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr;
+    gap: .85rem;
+    margin-top: .35rem;
+  }
+
+  .btn-cancel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border: 1.5px solid var(--border2);
+    border-radius: 12px;
+    color: var(--text2);
+    text-decoration: none;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: .84rem;
+    padding: .92rem;
+    transition: all .18s;
+    cursor: pointer;
+    min-height: 50px;
+  }
+  .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+  .btn-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    background: linear-gradient(135deg, var(--expense) 0%, #e74c3c 100%);
+    color: #fff;
+    border: none;
+    padding: .92rem 1rem;
+    border-radius: 12px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: .9rem;
+    letter-spacing: .02em;
+    cursor: pointer;
+    box-shadow: 0 4px 16px var(--expense-glow);
+    transition: all .2s;
+    min-height: 50px;
+  }
+  .btn-submit:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 7px 22px var(--expense-glow); }
+  .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; filter: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .55s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 520px) {
+    .add-op-page   { padding: 4rem .75rem 1.5rem; align-items: flex-start; }
+    .add-op-card   { padding: 1.4rem 1.1rem; border-radius: 20px; }
+    .add-op-input.amount { font-size: 1.75rem; }
+    .add-op-title  { font-size: 1.25rem; }
+  }
+  @media (max-width: 380px) {
+    .add-op-row    { grid-template-columns: 1fr; }
+    .add-op-actions { grid-template-columns: 1fr; }
+    .btn-cancel    { display: none; }
+  }
+
+</style>
+
+<div class="add-op-page">
+  <div class="add-op-card">
+
+    <!-- ── Header ── -->
+    <div class="add-op-header">
+      <a href="/" class="add-op-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div class="add-op-title-wrap">
+        <div class="add-op-badge">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13H5v-2h14v2z"/>
+          </svg>
+          Расход
+        </div>
+        <h1 class="add-op-title">Новый расход</h1>
+        <p class="add-op-subtitle">Обязательные поля отмечены <span class="add-op-required">*</span></p>
+      </div>
+    </div>
+
+    <!-- ── Form ── -->
+    <form id="addOpForm" method="POST" class="add-op-form-grid">
+      {% csrf_token %}
+      <input type="hidden" name="type" value="expense">
+
+      <!-- Amount -->
+      <div class="add-op-field">
+        <label class="add-op-label" for="amount_display">
+          Сумма <span class="add-op-required">*</span>
+        </label>
+        <div class="amount-container">
+          <span class="amount-symbol">UZS</span>
+          <!-- Visible formatted input (text, shows spaces) -->
+          <input
+            type="text"
+            id="amount_display"
+            inputmode="numeric"
+            class="add-op-input amount"
+            placeholder="0"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          >
+          <!-- Hidden real input sent to backend -->
+          <input type="hidden" name="amount" id="id_amount">
+          <span class="amount-uzs">сум</span>
+        </div>
+        <div id="err_amount"></div>
+      </div>
+
+      <!-- Category -->
+      <div class="add-op-field">
+        <label class="add-op-label">
+          Категория <span class="add-op-required">*</span>
+        </label>
+        <div class="cat-grid" id="catGrid">
+          {% for cat in categories %}
+          <div class="cat-item" data-id="{{ cat.id }}" onclick="selectCat(this)">
+            <div class="cat-img-wrap">
+              {% if cat.photo_url %}
+                <img src="{{ cat.photo_url }}" alt="{{ cat.name }}" loading="lazy">
+              {% else %}
+                <div class="cat-emoji-wrap">🗂️</div>
+              {% endif %}
+            </div>
+            <span class="cat-name">{{ cat.name }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="category" id="id_category">
+        <div id="err_category"></div>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="add-op-row">
+        <div class="add-op-field">
+          <label class="add-op-label">
+            Дата <span class="add-op-required">*</span>
+          </label>
+          <input type="date" name="date" id="id_date" class="add-op-input" required>
+          <div id="err_date"></div>
+        </div>
+        <div class="add-op-field">
+          <label class="add-op-label">
+            Время <span class="add-op-required">*</span>
+          </label>
+          <input type="time" name="time" id="id_time" class="add-op-input" required>
+          <div id="err_time"></div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="add-op-field">
+        <label class="add-op-label">
+          Описание
+          <span style="color:var(--muted);font-size:.56rem;font-weight:500;
+                       text-transform:none;letter-spacing:0;">(необязательно)</span>
+        </label>
+        <textarea
+          name="description"
+          id="id_description"
+          class="add-op-textarea"
+          rows="2"
+          placeholder="Например: обед, такси, продукты…"
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="add-op-actions">
+        <a href="/" class="btn-cancel">Отмена</a>
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Сохранить расход
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  /* ── Amount formatting ── */
+  const display  = document.getElementById('amount_display');
+  const hidden   = document.getElementById('id_amount');
+
+  function formatSpaces(raw) {
+    // Insert non-breaking space every 3 digits from the right
+    return raw.replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
+  }
+
+  display.addEventListener('input', () => {
+    // Keep only digits
+    const raw = display.value.replace(/\D/g, '');
+    // Update formatted display (cursor goes to end naturally on mobile)
+    display.value = raw ? formatSpaces(raw) : '';
+    // Feed clean number to hidden input
+    hidden.value = raw;
+    // Clear amount error
+    display.classList.remove('field-error');
+    document.getElementById('err_amount').innerHTML = '';
+  });
+
+  // On desktop: prevent non-numeric keys
+  display.addEventListener('keydown', e => {
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
+    if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+  });
+
+  // Restore cursor after formatting on desktop
+  display.addEventListener('keyup', () => {
+    const raw = display.value.replace(/\D/g, '');
+    const formatted = raw ? formatSpaces(raw) : '';
+    if (display.value !== formatted) {
+      display.value = formatted;
+      hidden.value  = raw;
+    }
+  });
+
+
+  /* ── Category selection ── */
+  let selectedCatId = '';
+  function selectCat(el) {
+    document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('selected', 'field-error'));
+    el.classList.add('selected');
+    selectedCatId = el.dataset.id;
+    document.getElementById('id_category').value = selectedCatId;
+    const e = document.getElementById('err_category');
+    if (e) { e.innerHTML = ''; }
+  }
+
+  /* ── Set default date & time ── */
+  window.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    document.getElementById('id_date').value = now.toISOString().split('T')[0];
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('id_time').value = `${hh}:${mm}`;
+  });
+
+  /* ── Clear field errors on change ── */
+  ['id_category', 'id_date', 'id_time'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      el.classList.remove('field-error');
+      const errEl = document.getElementById('err_' + id.replace('id_', ''));
+      if (errEl) errEl.innerHTML = '';
+    });
+  });
+
+  /* ── Submit ── */
+  document.getElementById('addOpForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+
+    // Clear all previous errors
+    document.querySelectorAll('.error-text').forEach(el => el.remove());
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+
+    // Client-side validation
+    let valid = true;
+    if (!hidden.value || parseInt(hidden.value) <= 0) {
+      display.classList.add('field-error');
+      document.getElementById('err_amount').innerHTML =
+        '<div class="error-text">Введите сумму</div>';
+      valid = false;
+    }
+    if (!selectedCatId) {
+      document.querySelectorAll('.cat-item').forEach(c => c.classList.add('field-error'));
+      const ce = document.getElementById('err_category');
+      if (ce) ce.innerHTML = '<div class="error-text">Выберите категорию</div>';
+      valid = false;
+    }
+    if (!valid) { if (!hidden.value || parseInt(hidden.value) <= 0) display.focus(); return; }
+
+    // Loading state
+    btn.disabled = true;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `<div class="btn-spinner"></div> Сохранение…`;
+
+    try {
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Сохранено!`;
+        btn.style.background = 'linear-gradient(135deg,var(--income),#27ae60)';
+        btn.style.boxShadow  = '0 4px 16px var(--income-glow)';
+        setTimeout(() => { window.location.href = '/'; }, 700);
+
+      } else {
+        for (const [field, messages] of Object.entries(data.errors || {})) {
+          const msg = Array.isArray(messages) ? messages[0] : messages;
+          if (field === 'amount') {
+            display.classList.add('field-error');
+          } else if (field === 'category') {
+            document.querySelectorAll('.cat-item').forEach(c => c.classList.add('field-error'));
+          } else {
+            const inp = document.getElementById(`id_${field}`);
+            if (inp) inp.classList.add('field-error');
+          }
+          const errDiv = document.getElementById(`err_${field}`);
+          if (errDiv) errDiv.innerHTML = `<div class="error-text">${msg}</div>`;
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      }
+
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
+  });
+</script>
+
+{% endblock %}
